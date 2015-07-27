@@ -10,7 +10,8 @@ We have built a simple Java application that generates temporary AWS credentials
 
 2. Setting up the config file
   It is essential that the config file be in the same directory as the ```oktaAWSCLI.jar``` file. The oktaAWSCLi config file holds information specific to each org and needs to be configured on an org to org basis. 
-  There are 2 key value that need to be completed, specifically your Okta Org and AWS application url.
+
+  Your Okta Org and AWS application url need to be added to your configuration file.
   - ```OKTA_ORG``` which is the url of the desired Okta org.
   - ```OKTA_AWS_APP_URL``` is the url link of your Okta AWS application url
   - **Obtaining an AWS app url**
