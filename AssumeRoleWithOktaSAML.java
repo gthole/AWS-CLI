@@ -1,6 +1,5 @@
 import java.io.*;
 import java.net.*;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -31,7 +30,7 @@ public class AssumeRoleWithOktaSAML {
 		
 		BufferedReader oktaBr = new BufferedReader(new FileReader(new File (System.getProperty("user.dir")) +"/oktaAWSCLI.config"));
 		
-		//extract oktaOrg and oktaAWSAppURL from okta settings file
+		//extract oktaOrg and oktaAWSAppURL from Okta settings file
 		String line = oktaBr.readLine();
 		while(line!=null){
 			if(line.contains("OKTA_ORG")){
@@ -41,11 +40,11 @@ public class AssumeRoleWithOktaSAML {
 				oktaAWSAppURL = line.substring(line.indexOf("=")+1).trim();
 			}
 			line = oktaBr.readLine();
-		}
-
-		Scanner scanner = new Scanner(System.in);
-			
+		}	
+		oktaBr.close();
+		
 		// Part 1: Initiate the authentication and capture the SAML assertion.
+		Scanner scanner = new Scanner(System.in);	
 		CloseableHttpClient httpClient = null;
 		CloseableHttpResponse responseAuthenticate = null;
 		CloseableHttpResponse responseSAML = null;
@@ -88,7 +87,8 @@ public class AssumeRoleWithOktaSAML {
 					System.out.println("Invalid Credentials, Please try again.");
 				}
 				else if(requestStatus == 500){
-					System.out.println("\nUnable to establish connection with: " + oktaOrg + " \nPlease verify that your Okta org url is corrct and try again" );
+					System.out.println("\nUnable to establish connection with: " + 
+							oktaOrg + " \nPlease verify that your Okta org url is corrct and try again" );
 					System.exit(0);
 				}
 				else if(requestStatus!=200){
@@ -146,11 +146,13 @@ public class AssumeRoleWithOktaSAML {
 				responseAuthenticate.close();
 				responseSAML.close();
 				httpClient.close();
+				scanner.close();
 			}catch(Exception ex) {
 				ex.printStackTrace();
 			}
 		}  
 		
+		scanner = new Scanner(System.in);
 		// Part 3: Assume an AWS role using the SAML Assertion from Okta
 		// Decode SAML response
 		resultSAML = resultSAML.replace("&#x2b;", "+").replace("&#x3d;", "=");
@@ -202,6 +204,7 @@ public class AssumeRoleWithOktaSAML {
 			}
 		}
 		
+		scanner.close();
 		String principalArn  = principalArns.get(selection);
 		String roleArn = roleArns.get(selection);
 		
