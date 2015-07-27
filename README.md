@@ -2,8 +2,7 @@
 
 ##Intro##
 
-We have built a simple Java application that generates temporary AWS credentials using AW STS Assume roles.  
-This enables AWS customers to seamlessly gain access to AWS resources using Okta to as a Single-Sign-On source.
+We have built a simple Java application that generates temporary AWS credentials using AWS STS Assume roles, this enables AWS customers to seamlessly gain access to AWS resources using Okta to as a Single-Sign-On source.
 
 ##Setup##
 
