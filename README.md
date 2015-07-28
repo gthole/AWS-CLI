@@ -1,9 +1,11 @@
-# AWS-CLI
+# AWS-CLI via Okta
 
 
 We have built a simple Java application that generates temporary AWS credentials using AWS STS Assume roles, this enables AWS customers to seamlessly gain access to AWS resources using Okta to as a Single-Sign-On source.
 
 ###Setup###
+  There is a bug in AWS requiring the ```aws configure``` command to be before temoparay tokens can be assigned
+    - Use ```aws configure``` to initially configure aws 
 
   Use ```git clone https://github.com/nshobayo/AWS-CLI.git``` to clone the repository locally
 
