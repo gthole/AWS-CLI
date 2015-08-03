@@ -21,7 +21,19 @@ import com.amazonaws.auth.*;
 public class AssumeRoleWithOktaSAML {
 
 	public static void main(String[] args) throws Exception {
+		
+		//check if credentials file has been created
+		File f = new File (System.getProperty("user.home")+"/.aws/credentials");
+		if(!f.exists()){
+			f.getParentFile().mkdirs();
 			
+			PrintWriter writer = new PrintWriter(f, "UTF-8");
+			writer.println("[default]");
+			writer.println("aws_access_key_id=");
+			writer.println("aws_secret_access_key=");
+			writer.close();
+		}
+		
 		//User specific variables
 		String oktaOrg = "";
 		String oktaAWSAppURL = "";
@@ -132,33 +144,33 @@ public class AssumeRoleWithOktaSAML {
 			e.printStackTrace();
 		} catch(UnknownHostException e){
 			System.out.println("\nUnable to establish connection with AWS. \nPlease verify that your AWS app url is corrct and try again" );
+			scanner.close();
 			System.exit(0);
 		}
 		catch(ClientProtocolException e){
 			System.out.println("\nNo Org found, enter you org in you oktaCredentials file" );
+			scanner.close();
 			System.exit(0);
 		}
 		catch (IOException e) {
 			e.printStackTrace();
+			scanner.close();
 		}
 		finally {
 			try{
 				responseAuthenticate.close();
 				responseSAML.close();
 				httpClient.close();
-				scanner.close();
 			}catch(Exception ex) {
 				ex.printStackTrace();
 			}
 		}  
 		
-		scanner = new Scanner(System.in);
 		// Part 3: Assume an AWS role using the SAML Assertion from Okta
 		// Decode SAML response
 		resultSAML = resultSAML.replace("&#x2b;", "+").replace("&#x3d;", "=");
 		String resultSAMLDecoded = new String(Base64.decodeBase64(resultSAML));
 		
-		int i = 0;
 		ArrayList<String> principalArns = new ArrayList<String>();
 		ArrayList<String> roleArns = new ArrayList<String>();
 
@@ -171,12 +183,13 @@ public class AssumeRoleWithOktaSAML {
 		System.out.println("\nPlease choose the role you would like to assume: ");
 		
 		//Gather list of applicable AWS roles
+		int i = 0;
 		while (resultSAMLDecoded.indexOf("arn:aws") != -1) { 
 			String resultSAMLRole = resultSAMLDecoded.substring(resultSAMLDecoded.indexOf("arn:aws"), resultSAMLDecoded.indexOf("</saml2:AttributeValue"));
 			String[] parts = resultSAMLRole.split(",");
 			principalArns.add(parts[0]);
 			roleArns.add(parts[1]);	
-			System.out.println("[ " + i+1  + " ]: " + roleArns.get(i));
+			System.out.println("[ " + (i+1)  + " ]: " + roleArns.get(i));
 			resultSAMLDecoded = (resultSAMLDecoded.substring(resultSAMLDecoded.indexOf("</saml2:AttributeValue") +1));
 			i++;
 		}
@@ -187,8 +200,7 @@ public class AssumeRoleWithOktaSAML {
 			System.out.print("Selection: ");
 			String selectInput = scanner.next();
 			try{
-				selection = Integer.parseInt(selectInput);
-					
+				selection = Integer.parseInt(selectInput) - 1;
 				if (selection >= roleArns.size()) {
 					InputMismatchException e = new InputMismatchException();
 					throw e;
@@ -209,15 +221,14 @@ public class AssumeRoleWithOktaSAML {
 		String roleArn = roleArns.get(selection);
 		
 		//use user credentials to assume AWS role
-		AWSSecurityTokenServiceClient stsClient = new AWSSecurityTokenServiceClient();	
-		AssumeRoleWithSAMLRequest assumeRequest = new AssumeRoleWithSAMLRequest()
-		.withPrincipalArn(principalArn)
-		.withRoleArn(roleArn)
-		.withSAMLAssertion(resultSAML);
+		AWSSecurityTokenServiceClient stsClient = new AWSSecurityTokenServiceClient(); 
+		AssumeRoleWithSAMLRequest assumeRequest = new AssumeRoleWithSAMLRequest() 
+		.withPrincipalArn(principalArn) 
+		.withRoleArn(roleArn) 
+		.withSAMLAssertion(resultSAML); 
 		
-		AssumeRoleWithSAMLResult assumeResult =
-		stsClient.assumeRoleWithSAML(assumeRequest);
-		
+		AssumeRoleWithSAMLResult assumeResult = stsClient.assumeRoleWithSAML(assumeRequest);
+
 		// Part 4: Write the credentials to ~/.aws/credentials
 		BasicSessionCredentials temporaryCredentials =
 			new BasicSessionCredentials(
