@@ -4,10 +4,6 @@
 We have built a simple Java application that generates temporary AWS credentials using AWS STS Assume roles, this enables AWS customers to seamlessly gain access to AWS resources using Okta to as a Single-Sign-On source.
 
 ###Setup###
-  
-  Use ```aws configure``` to initially configure aws 
-  
-  -  **NOTE** the keys entered do not have to be valid for the initial config, any string is acceptable
 
 Use ```git clone https://github.com/nshobayo/AWS-CLI.git``` to clone the repository locally
 
