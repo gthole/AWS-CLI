@@ -187,7 +187,7 @@ public class AssumeRoleWithOktaSAML {
 		String sessionToken = ""; 
 		
 		//prompt for sms verification 
-		System.out.println("\nSMS Factor Authentication \nEnter 'change factor' to use a diffrent factor");
+		System.out.println("\nSMS Factor Authentication \nEnter 'change factor' to use a different factor");
 		while(sessionToken == ""){
 			if( answer != ""){
 				System.out.println("Incorrect passcode, please try again or type 'new code' to be sent a new sms token");
