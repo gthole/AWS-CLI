@@ -95,7 +95,7 @@ public class AssumeRoleWithOktaSAML {
 		else if(requestStatus == 500){
 			//failed connection establishment
 			System.out.println("\nUnable to establish connection with: " + 
-					oktaOrg + " \nPlease verify that your Okta org url is corrct and try again" );
+					oktaOrg + " \nPlease verify that your Okta org url is correct and try again" );
 			System.exit(0);
 		}
 		else if(requestStatus!=200){
@@ -187,7 +187,7 @@ public class AssumeRoleWithOktaSAML {
 		String sessionToken = ""; 
 		
 		//prompt for sms verification 
-		System.out.println("\nSMS Factor Authenication \nEnter 'change factor' to use a diffrent factor");
+		System.out.println("\nSMS Factor Authentication \nEnter 'change factor' to use a diffrent factor");
 		while(sessionToken == ""){
 			if( answer != ""){
 				System.out.println("Incorrect passcode, please try again or type 'new code' to be sent a new sms token");
@@ -599,11 +599,11 @@ public class AssumeRoleWithOktaSAML {
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		} catch(UnknownHostException e){
-			System.out.println("\nUnable to establish connection with AWS. \nPlease verify that your AWS app url is corrct and try again" );
+			System.out.println("\nUnable to establish connection with AWS. \nPlease verify that your AWS app url is correct and try again" );
 			System.exit(0);
 		}
 		catch(ClientProtocolException e){
-			System.out.println("\nNo Org found, enter you org in you oktaCredentials file" );
+			System.out.println("\nNo Org found, enter your org in your oktaAWSCLI.config file" );
 			System.exit(0);
 		}
 		catch (IOException e) {
