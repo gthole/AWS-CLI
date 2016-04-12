@@ -159,7 +159,7 @@ public class AssumeRoleWithOktaSAML {
 		String answer = "";
 		
 		//prompt user for answer 
-		System.out.println("\nSecurity Question Factor Authentication\nEnter 'change factor' to use a diffrent factor\n");
+		System.out.println("\nSecurity Question Factor Authentication\nEnter 'change factor' to use a different factor\n");
 		while(sessionToken == ""){
 			if( answer != ""){
 				System.out.println("Incorrect answer, please try again");
@@ -187,7 +187,7 @@ public class AssumeRoleWithOktaSAML {
 		String sessionToken = ""; 
 		
 		//prompt for sms verification 
-		System.out.println("\nSMS Factor Authenication \nEnter 'change factor' to use a diffrent factor");
+		System.out.println("\nSMS Factor Authenication \nEnter 'change factor' to use a different factor");
 		while(sessionToken == ""){
 			if( answer != ""){
 				System.out.println("Incorrect passcode, please try again or type 'new code' to be sent a new sms token");
@@ -221,7 +221,7 @@ public class AssumeRoleWithOktaSAML {
 		String answer = "";
 		
 		//prompt for token 
-		System.out.println("\n" +factor.getString("provider") + " Token Factor Authentication\nEnter 'change factor' to use a diffrent factor");
+		System.out.println("\n" +factor.getString("provider") + " Token Factor Authentication\nEnter 'change factor' to use a different factor");
 		while(sessionToken == ""){
 			if( answer != ""){
 				System.out.println("Invalid token, please try again");
@@ -431,11 +431,11 @@ public class AssumeRoleWithOktaSAML {
 		//change with file customization
 		System.out.println("\n----------------------------------------------------------------------------------------------------------------------");
 		System.out.println("Your new access key pair has been stored in the aws configuration file "
-				+  System.getProperty("user.home") + "/.aws/credentials under the saml profile.");
+				+  System.getProperty("user.home") + "/.aws/credentials .");
 		System.out.println("Note that it will expire at " +  dateFormat.format(date.getTime()));
 		System.out.println("After this time you may safely rerun this script to refresh your access key pair.");
-		System.out.println("To use this credential call the aws cli with the --profile option "
-				+ "(e.g. aws --profile saml ec2 describe-instances)");
+		System.out.println("To use this credential call the aws cli  "
+				+ "(e.g. aws ec2 describe-instances)");
 		System.out.println("----------------------------------------------------------------------------------------------------------------------");
 	}
 	
