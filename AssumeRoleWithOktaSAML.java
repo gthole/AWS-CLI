@@ -5,11 +5,18 @@ import java.util.*;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpHost;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.ProxyAuthenticationStrategy;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.NTCredentials;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 import org.apache.commons.codec.binary.Base64;
@@ -19,6 +26,7 @@ import org.json.JSONObject;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClient;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithSAMLRequest;
 import com.amazonaws.services.securitytoken.model.AssumeRoleWithSAMLResult;
+import com.amazonaws.ClientConfiguration;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.amazonaws.auth.*;
 
@@ -27,6 +35,71 @@ public class AssumeRoleWithOktaSAML {
 	//User specific variables
 	private static String oktaOrg = "";
 	private static String oktaAWSAppURL = "";
+
+	private static String proxyHost; 
+	private static int proxyPort; 
+	private static String proxyUsername; 
+	private static String proxyPassword; 
+	private static String proxyDomain; 
+	private static String proxyWorkstation ; 
+
+	private static void getProxySettings() {
+		proxyHost = System.getProperty("http.proxyHost");
+		String proxyPortString = System.getProperty("http.proxyPort");
+		proxyPort = (proxyPortString != null) ? Integer.parseInt(proxyPortString) : -1;
+		proxyUsername = System.getProperty("http.proxyUser");
+		proxyPassword = System.getProperty("http.proxyPassword");
+		proxyDomain = System.getProperty("http.proxyDomain");
+		proxyWorkstation = System.getProperty("http.proxyWorkstation");
+	}
+	
+	private static CloseableHttpClient buildHttpClient() {
+		CloseableHttpClient httpClient = null;
+		
+		if (proxyHost != null && proxyPort > 0) {
+			System.out.println("Configuring Proxy. Proxy Host: " + proxyHost + " " + "Proxy Port: " + proxyPort);
+			HttpHost proxyHttpHost = new HttpHost(proxyHost, proxyPort);
+			HttpClientBuilder clientBuilder = HttpClientBuilder.create();
+			clientBuilder.useSystemProperties();
+			clientBuilder.setProxy(proxyHttpHost);
+			
+			if (proxyUsername != null && proxyPassword != null) {
+				CredentialsProvider credsProvider = new BasicCredentialsProvider();
+				credsProvider.setCredentials(
+					new AuthScope(proxyHost, proxyPort),
+					new NTCredentials(proxyUsername, proxyPassword, proxyWorkstation, proxyDomain));
+				clientBuilder.setDefaultCredentialsProvider(credsProvider);
+				clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
+            }
+
+			httpClient = clientBuilder.build();
+		} else {
+			httpClient = HttpClients.createDefault();
+		}
+		return httpClient;
+	}
+	
+	private static AWSSecurityTokenServiceClient buildStsClient()
+	{
+		AWSSecurityTokenServiceClient stsClient = null;
+		if (proxyHost != null && proxyPort > 0) {
+			ClientConfiguration clientConfig = new ClientConfiguration();
+			clientConfig.setProxyHost(proxyHost); 
+			clientConfig.setProxyPort(proxyPort); 
+			
+			if (proxyUsername != null && proxyPassword != null) {
+				clientConfig.setProxyUsername(proxyUsername); 
+				clientConfig.setProxyPassword(proxyPassword); 
+				clientConfig.setProxyWorkstation(proxyWorkstation);
+				clientConfig.setProxyDomain(proxyDomain);
+			}
+			
+			stsClient = new AWSSecurityTokenServiceClient(clientConfig);
+		} else {
+			stsClient = new AWSSecurityTokenServiceClient();
+		}
+		return stsClient;
+	}
 	
 	/* creates required AWS credential file if necessary" */ 
 	private static void awsSetup() throws FileNotFoundException, UnsupportedEncodingException{
@@ -68,7 +141,7 @@ public class AssumeRoleWithOktaSAML {
 	/*Uses user's credentials to obtain Okta session Token */
 	private static CloseableHttpResponse authnticateCredentials(String username, String password) throws JSONException, ClientProtocolException, IOException{
 		HttpPost httpost = null;
-		CloseableHttpClient httpClient = HttpClients.createDefault();
+		CloseableHttpClient httpClient = buildHttpClient();
 		
 		
 		//HTTP Post request to Okta API for session token   
@@ -290,7 +363,7 @@ public class AssumeRoleWithOktaSAML {
 		
 		//create post request 
 		CloseableHttpResponse responseAuthenticate = null;	
-		CloseableHttpClient httpClient = HttpClients.createDefault();
+		CloseableHttpClient httpClient = buildHttpClient();
 
 		HttpPost httpost = new HttpPost(verifyPoint);
 		httpost.addHeader("Accept", "application/json");
@@ -488,7 +561,7 @@ public class AssumeRoleWithOktaSAML {
 	private static String awsSamlHandler(String oktaSessionToken) throws ClientProtocolException, IOException{
 		HttpGet httpget = null;
 		CloseableHttpResponse responseSAML = null;
-		CloseableHttpClient httpClient = HttpClients.createDefault();
+		CloseableHttpClient httpClient = buildHttpClient();
 		String resultSAML = "";
 		String outputSAML = "";
 		
@@ -552,7 +625,7 @@ public class AssumeRoleWithOktaSAML {
 		String roleArn = roleArns.get(selection);
 		
 		//use user credentials to assume AWS role
-		AWSSecurityTokenServiceClient stsClient = new AWSSecurityTokenServiceClient(); 
+		AWSSecurityTokenServiceClient stsClient = buildStsClient();
 		AssumeRoleWithSAMLRequest assumeRequest = new AssumeRoleWithSAMLRequest() 
 		.withPrincipalArn(principalArn) 
 		.withRoleArn(roleArn) 
@@ -565,7 +638,7 @@ public class AssumeRoleWithOktaSAML {
 	/* Retrieves AWS credentials from AWS's assumedRoleResult and write the to aws credential file
 	 * Precondition :  AssumeRoleWithSAMLResult assumeResult
 	 */
-	private static void setAWSCredentials(AssumeRoleWithSAMLResult assumeResult) throws FileNotFoundException, UnsupportedEncodingException{
+	private static void setAWSCredentials(AssumeRoleWithSAMLResult assumeResult) throws FileNotFoundException, UnsupportedEncodingException, IOException{
 		BasicSessionCredentials temporaryCredentials =
 			new BasicSessionCredentials(
 					assumeResult.getCredentials().getAccessKeyId(),
@@ -589,6 +662,7 @@ public class AssumeRoleWithOktaSAML {
 
 	
 	public static void main(String[] args) throws Exception {
+		getProxySettings();
 		awsSetup();
 		extractCredentials();
 		
