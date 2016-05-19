@@ -35,6 +35,7 @@ public class AssumeRoleWithOktaSAML {
 	//User specific variables
 	private static String oktaOrg = "";
 	private static String oktaAWSAppURL = "";
+	private static String oktaAppLabel = "";
 
 	private static String proxyHost; 
 	private static int proxyPort; 
@@ -131,6 +132,9 @@ public class AssumeRoleWithOktaSAML {
 				}
 				else if( line.contains("OKTA_AWS_APP_URL")){
 					oktaAWSAppURL = line.substring(line.indexOf("=")+1).trim();
+				}
+				else if( line.contains("OKTA_APP_LABEL")){
+					oktaAppLabel = line.substring(line.indexOf("=")+1).trim();
 				}
 			}
 			line = oktaBr.readLine();
@@ -648,12 +652,25 @@ public class AssumeRoleWithOktaSAML {
 		String awsAccessKey = temporaryCredentials.getAWSAccessKeyId();
 		String awsSecretKey = temporaryCredentials.getAWSSecretKey();
 		String awsSessionToken = temporaryCredentials.getSessionToken();
-	
-		File file = new File (System.getProperty("user.home")+"/.aws/credentials");
-		file.getParentFile().mkdirs();
-	
-		PrintWriter writer = new PrintWriter(file, "UTF-8");
-		writer.println("[default]");
+		
+		String profileName = "";
+		PrintWriter writer = null;
+		
+		if (oktaAppLabel != null && oktaAppLabel.length() > 0) {
+			profileName = oktaAppLabel;
+			//Append AWS credentials to file
+			FileWriter file = new FileWriter(System.getProperty("user.home")+"/.aws/credentials", true);
+			
+			writer = new PrintWriter(new BufferedWriter(file));
+		} else {
+			profileName = "default";
+			File file = new File (System.getProperty("user.home")+"/.aws/credentials");
+			file.getParentFile().mkdirs();
+			
+			writer = new PrintWriter(file, "UTF-8");
+		}
+			
+		writer.println("["+profileName+"]");
 		writer.println("aws_access_key_id="+awsAccessKey);
 		writer.println("aws_secret_access_key="+awsSecretKey);
 		writer.println("aws_session_token="+awsSessionToken);
