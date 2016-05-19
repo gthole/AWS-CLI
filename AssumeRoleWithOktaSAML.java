@@ -51,11 +51,14 @@ public class AssumeRoleWithOktaSAML {
 		//extract oktaOrg and oktaAWSAppURL from Okta settings file
 		String line = oktaBr.readLine();
 		while(line!=null){
-			if(line.contains("OKTA_ORG")){
-				oktaOrg = line.substring(line.indexOf("=")+1).trim();
-			}
-			else if( line.contains("OKTA_AWS_APP_URL")){
-				oktaAWSAppURL = line.substring(line.indexOf("=")+1).trim();
+			//proceed if not a line comment
+			if(!line.startsWith("#")){
+				if(line.contains("OKTA_ORG")){
+					oktaOrg = line.substring(line.indexOf("=")+1).trim();
+				}
+				else if( line.contains("OKTA_AWS_APP_URL")){
+					oktaAWSAppURL = line.substring(line.indexOf("=")+1).trim();
+				}
 			}
 			line = oktaBr.readLine();
 		}	
