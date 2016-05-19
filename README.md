@@ -22,5 +22,9 @@ Use ```git clone https://github.com/nshobayo/AWS-CLI.git``` to clone the reposit
 
 ###Running the application###
   - To run the application use the following command while in the directory containing the ```.jar``` file
-  - ```java -jar oktaAWSCLI.jar```
-  
+
+  ```java -jar oktaAWSCLI.jar```
+
+  - To specify proxy settings, you can pass in using system properties, which may be set through -D command line option.
+
+  ```java -Dhttp.proxyHost=proxy.com -Dhttp.proxyPort=80 -Dhttp.proxyUser=username -Dhttp.proxyPassword=password -jar oktaAWSCLI.jar```
