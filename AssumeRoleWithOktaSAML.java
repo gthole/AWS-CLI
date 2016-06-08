@@ -529,13 +529,17 @@ public class AssumeRoleWithOktaSAML {
 		
 		//Redo sequence if response from AWS doesn't return 200 Status
 		while(requestStatus != 200){
+			String oktaUsername = System.getenv("OKTA_USERNAME");
+
+			if (oktaUsername == null || oktaUsername.length == 0) {
+				// Prompt for user credentials
+				System.out.print("Username: ");
+				Scanner scanner = new Scanner(System.in);
+				oktaUsername = scanner.next();
+			} else {
+				System.out.print("Username: " + oktaUsername + " (from OKTA_USERNAME env variable)");
+			}
 			
-	 		// Prompt for user credentials
-	 		System.out.print("Username: ");
-	 		Scanner scanner = new Scanner(System.in);
-	 		
-			String oktaUsername = scanner.next();
-	 		
 	 		Console console = System.console();
 	 		String oktaPassword = new String(console.readPassword("Password: "));
 	 		
@@ -606,9 +610,7 @@ public class AssumeRoleWithOktaSAML {
 		if(!resultSAMLDecoded.contains("arn:aws")){
 			System.out.println("\nYou do not have access to AWS through Okta. \nPlease contact your administrator.");
 			System.exit(0);
-		}
-		
-		System.out.println("\nPlease choose the role you would like to assume: ");
+		}	
 		
 		//Gather list of applicable AWS roles
 		int i = 0;
@@ -622,8 +624,16 @@ public class AssumeRoleWithOktaSAML {
 			i++;
 		}
 
-		//Prompt user for role selection
-		int selection = numSelection(roleArns.size());
+		int selection;
+		if (i == 1) {
+			// There is only one choice, so auto-select it
+			selection = 0;
+			System.out.println("\nUsing given role: " + roleArns.get(selection));
+		} else {
+			// Prompt user for role selection
+			System.out.println("\nPlease choose the role you would like to assume: ");
+			selection = numSelection(roleArns.size());
+		}
 		
 		String principalArn  = principalArns.get(selection);
 		String roleArn = roleArns.get(selection);
