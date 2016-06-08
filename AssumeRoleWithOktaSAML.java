@@ -37,12 +37,12 @@ public class AssumeRoleWithOktaSAML {
 	private static String oktaAWSAppURL = "";
 	private static String oktaAppLabel = "";
 
-	private static String proxyHost; 
-	private static int proxyPort; 
-	private static String proxyUsername; 
-	private static String proxyPassword; 
-	private static String proxyDomain; 
-	private static String proxyWorkstation ; 
+	private static String proxyHost;
+	private static int proxyPort;
+	private static String proxyUsername;
+	private static String proxyPassword;
+	private static String proxyDomain;
+	private static String proxyWorkstation ;
 
 	private static void getProxySettings() {
 		proxyHost = System.getProperty("http.proxyHost");
@@ -53,17 +53,17 @@ public class AssumeRoleWithOktaSAML {
 		proxyDomain = System.getProperty("http.proxyDomain");
 		proxyWorkstation = System.getProperty("http.proxyWorkstation");
 	}
-	
+
 	private static CloseableHttpClient buildHttpClient() {
 		CloseableHttpClient httpClient = null;
-		
+
 		if (proxyHost != null && proxyPort > 0) {
 			System.out.println("Configuring Proxy. Proxy Host: " + proxyHost + " " + "Proxy Port: " + proxyPort);
 			HttpHost proxyHttpHost = new HttpHost(proxyHost, proxyPort);
 			HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 			clientBuilder.useSystemProperties();
 			clientBuilder.setProxy(proxyHttpHost);
-			
+
 			if (proxyUsername != null && proxyPassword != null) {
 				CredentialsProvider credsProvider = new BasicCredentialsProvider();
 				credsProvider.setCredentials(
@@ -79,37 +79,37 @@ public class AssumeRoleWithOktaSAML {
 		}
 		return httpClient;
 	}
-	
+
 	private static AWSSecurityTokenServiceClient buildStsClient()
 	{
 		AWSSecurityTokenServiceClient stsClient = null;
 		if (proxyHost != null && proxyPort > 0) {
 			ClientConfiguration clientConfig = new ClientConfiguration();
-			clientConfig.setProxyHost(proxyHost); 
-			clientConfig.setProxyPort(proxyPort); 
-			
+			clientConfig.setProxyHost(proxyHost);
+			clientConfig.setProxyPort(proxyPort);
+
 			if (proxyUsername != null && proxyPassword != null) {
-				clientConfig.setProxyUsername(proxyUsername); 
-				clientConfig.setProxyPassword(proxyPassword); 
+				clientConfig.setProxyUsername(proxyUsername);
+				clientConfig.setProxyPassword(proxyPassword);
 				clientConfig.setProxyWorkstation(proxyWorkstation);
 				clientConfig.setProxyDomain(proxyDomain);
 			}
-			
+
 			stsClient = new AWSSecurityTokenServiceClient(clientConfig);
 		} else {
 			stsClient = new AWSSecurityTokenServiceClient();
 		}
 		return stsClient;
 	}
-	
-	/* creates required AWS credential file if necessary" */ 
+
+	/* creates required AWS credential file if necessary" */
 	private static void awsSetup() throws FileNotFoundException, UnsupportedEncodingException{
 		//check if credentials file has been created
 		File f = new File (System.getProperty("user.home")+"/.aws/credentials");
 		//creates credentials file
 		if(!f.exists()){
 			f.getParentFile().mkdirs();
-			
+
 			PrintWriter writer = new PrintWriter(f, "UTF-8");
 			writer.println("[default]");
 			writer.println("aws_access_key_id=");
@@ -117,11 +117,11 @@ public class AssumeRoleWithOktaSAML {
 			writer.close();
 		}
 	}
-	
+
 	/* Parses application's config file for app URL and Okta Org */
 	private static void extractCredentials() throws IOException{
 		BufferedReader oktaBr = new BufferedReader(new FileReader(new File (System.getProperty("user.dir")) +"/oktaAWSCLI.config"));
-		
+
 		//extract oktaOrg and oktaAWSAppURL from Okta settings file
 		String line = oktaBr.readLine();
 		while(line!=null){
@@ -138,7 +138,7 @@ public class AssumeRoleWithOktaSAML {
 				}
 			}
 			line = oktaBr.readLine();
-		}	
+		}
 		oktaBr.close();
 	}
 
@@ -146,19 +146,19 @@ public class AssumeRoleWithOktaSAML {
 	private static CloseableHttpResponse authnticateCredentials(String username, String password) throws JSONException, ClientProtocolException, IOException{
 		HttpPost httpost = null;
 		CloseableHttpClient httpClient = buildHttpClient();
-		
-		
-		//HTTP Post request to Okta API for session token   
+
+
+		//HTTP Post request to Okta API for session token
 		httpost = new HttpPost("https://" + oktaOrg + "/api/v1/authn");
 		httpost.addHeader("Accept", "application/json");
 		httpost.addHeader("Content-Type", "application/json");
 		httpost.addHeader("Cache-Control", "no-cache");
-		
-		//construction of request JSON 
+
+		//construction of request JSON
 		JSONObject jsonObjRequest = new JSONObject();
 		jsonObjRequest.put("username", username);
 		jsonObjRequest.put("password", password);
-	 
+
 		StringEntity entity = new StringEntity(jsonObjRequest.toString(), HTTP.UTF_8);
 		entity.setContentType("application/json");
 		httpost.setEntity(entity);
@@ -174,7 +174,7 @@ public class AssumeRoleWithOktaSAML {
 		}
 		else if(requestStatus == 500){
 			//failed connection establishment
-			System.out.println("\nUnable to establish connection with: " + 
+			System.out.println("\nUnable to establish connection with: " +
 					oktaOrg + " \nPlease verify that your Okta org url is correct and try again" );
 			System.exit(0);
 		}
@@ -184,8 +184,8 @@ public class AssumeRoleWithOktaSAML {
 			+ response.getStatusLine().getStatusCode());
 		}
 	}
-	
-	/*Handles possible AWS assertion retrieval errors */ 
+
+	/*Handles possible AWS assertion retrieval errors */
 	private static void samlFailHandler(int requestStatus, CloseableHttpResponse responseSAML) throws UnknownHostException{
 		if(responseSAML.getStatusLine().getStatusCode() == 500){
 			//incorrectly formatted app url
@@ -201,7 +201,7 @@ public class AssumeRoleWithOktaSAML {
 	/* Handles user selection prompts */
 	private static int numSelection(int max){
 		Scanner scanner = new Scanner(System.in);
-		
+
 		int selection = -1;
 		while (selection == -1) {
 			//prompt user for selection
@@ -217,12 +217,12 @@ public class AssumeRoleWithOktaSAML {
 			catch (InputMismatchException e ) {
 				//raised by something other than a number entered
 				System.out.println("Invalid input: Please enter a number corresponding to a role \n");
-				selection = -1; 
+				selection = -1;
 			}
 			catch (NumberFormatException e) {
 				//raised by number too high or low selected
 				System.out.println("Invalid input: Please enter in a number \n");
-				selection = -1; 
+				selection = -1;
 			}
 		}
 		return selection;
@@ -230,15 +230,15 @@ public class AssumeRoleWithOktaSAML {
 
 	/*Handles question factor authentication,
 	 * Precondition: question factor as JSONObject factor, current state token stateToken
-	 * Postcondition: return session token as String sessionToken 
+	 * Postcondition: return session token as String sessionToken
 	 */
 	private static String questionFactor(JSONObject factor, String stateToken) throws JSONException, ClientProtocolException, IOException{
 		String question = factor.getJSONObject("profile").getString("questionText");
 		Scanner scanner = new Scanner(System.in);
-		String sessionToken = ""; 
+		String sessionToken = "";
 		String answer = "";
-		
-		//prompt user for answer 
+
+		//prompt user for answer
 		System.out.println("\nSecurity Question Factor Authentication\nEnter 'change factor' to use a different factor\n");
 		while(sessionToken == ""){
 			if( answer != ""){
@@ -246,27 +246,27 @@ public class AssumeRoleWithOktaSAML {
 			}
 			System.out.println(question);
 			System.out.print("Answer: ");
-			answer = scanner.nextLine();					
+			answer = scanner.nextLine();
 			//verify answer is correct
 			if(answer.toLowerCase().equals("change factor")){
 				return answer;
 			}
 			sessionToken = verifyAnswer(answer, factor, stateToken);
 		}
-		return sessionToken; 
+		return sessionToken;
 	}
-	
+
 
 	/*Handles sms factor authentication
 	 * Precondition: question factor as JSONObject factor, current state token stateToken
-	 * Postcondition: return session token as String sessionToken 
+	 * Postcondition: return session token as String sessionToken
 	 */
 	private static String smsFactor(JSONObject factor, String stateToken) throws ClientProtocolException, JSONException, IOException{
 		Scanner scanner = new Scanner(System.in);
 		String answer = "";
-		String sessionToken = ""; 
-		
-		//prompt for sms verification 
+		String sessionToken = "";
+
+		//prompt for sms verification
 		System.out.println("\nSMS Factor Authentication \nEnter 'change factor' to use a different factor");
 		while(sessionToken == ""){
 			if( answer != ""){
@@ -276,7 +276,7 @@ public class AssumeRoleWithOktaSAML {
 				sessionToken = verifyAnswer("",factor,stateToken);
 			}
 			System.out.print("SMS Code: ");
-			answer = scanner.nextLine();	
+			answer = scanner.nextLine();
 			//resends code
 			if(answer.equals("new code")){
 				answer = "";
@@ -287,54 +287,54 @@ public class AssumeRoleWithOktaSAML {
 			//verifies code
 			sessionToken = verifyAnswer(answer, factor, stateToken);
 		}
-		return sessionToken; 
+		return sessionToken;
 	}
-	
+
 
 	/*Handles token factor authentication, i.e: Google Authenticator or Okta Verify
 	 * Precondition: question factor as JSONObject factor, current state token stateToken
-	 * Postcondition: return session token as String sessionToken 
+	 * Postcondition: return session token as String sessionToken
 	 */
 	private static String totpFactor(JSONObject factor, String stateToken) throws ClientProtocolException, JSONException, IOException{
 		Scanner scanner = new Scanner(System.in);
-		String sessionToken = ""; 
+		String sessionToken = "";
 		String answer = "";
-		
-		//prompt for token 
+
+		//prompt for token
 		System.out.println("\n" +factor.getString("provider") + " Token Factor Authentication\nEnter 'change factor' to use a different factor");
 		while(sessionToken == ""){
 			if( answer != ""){
 				System.out.println("Invalid token, please try again");
 			}
-			
+
 			System.out.print("Token: ");
-			answer = scanner.nextLine();					
+			answer = scanner.nextLine();
 			//verify auth Token
 			if(answer.toLowerCase().equals("change factor")){
 				return answer;
 			}
 			sessionToken = verifyAnswer(answer, factor, stateToken);
 		}
-		return sessionToken; 
+		return sessionToken;
 	}
-	
+
 
 	/*Handles push factor authentication,
-	 * 
+	 *
 	 * MIGHT NOT WORK CORRENTLY - NOT TESTED
-	 * 
+	 *
 	 * Precondition: question factor as JSONObject factor, current state token stateToken
-	 * Postcondition: return session token as String sessionToken 
+	 * Postcondition: return session token as String sessionToken
 	 */
 	private static String pushFactor(JSONObject factor, String stateToken) throws ClientProtocolException, JSONException, IOException{
 		Calendar newTime = null;
 		Calendar time = Calendar.getInstance();
-		String sessionToken = ""; 
+		String sessionToken = "";
 
 		System.out.println("\nPush Factor Authentication");
 		while( sessionToken == ""){
 			System.out.print("Token: ");
-			//prints waiting tick marks 
+			//prints waiting tick marks
 			if( time.compareTo(newTime) > 4000){
 				System.out.println("...");
 			}
@@ -347,44 +347,44 @@ public class AssumeRoleWithOktaSAML {
 			time = newTime;
 			newTime = Calendar.getInstance();
 		}
-		return sessionToken; 
+		return sessionToken;
 	}
-	
+
 
 	/*Handles verification for all Factor types
 	 * Precondition: question factor as JSONObject factor, current state token stateToken
-	 * Postcondition: return session token as String sessionToken 
+	 * Postcondition: return session token as String sessionToken
 	 */
 	private static String verifyAnswer(String answer, JSONObject factor, String stateToken) throws JSONException, ClientProtocolException, IOException{
 		JSONObject profile = new JSONObject();
 		String verifyPoint = factor.getJSONObject("_links").getJSONObject("verify").getString("href");
-		
+
 		profile.put("stateToken", stateToken);
-	
+
 		if( answer != ""){
 			profile.put("answer", answer);
 		}
-		
-		//create post request 
-		CloseableHttpResponse responseAuthenticate = null;	
+
+		//create post request
+		CloseableHttpResponse responseAuthenticate = null;
 		CloseableHttpClient httpClient = buildHttpClient();
 
 		HttpPost httpost = new HttpPost(verifyPoint);
 		httpost.addHeader("Accept", "application/json");
 		httpost.addHeader("Content-Type", "application/json");
 		httpost.addHeader("Cache-Control", "no-cache");
-		
+
 		StringEntity entity = new StringEntity(profile.toString(), HTTP.UTF_8);
 		entity.setContentType("application/json");
 		httpost.setEntity(entity);
 		responseAuthenticate = httpClient.execute(httpost);
-		
+
 		BufferedReader br = new BufferedReader(new InputStreamReader(
 		(responseAuthenticate.getEntity().getContent())));
-		
+
 		String outputAuthenticate = br.readLine();
 		JSONObject jsonObjResponse = new JSONObject(outputAuthenticate);
-		//Handles request response 
+		//Handles request response
 		if(jsonObjResponse.has("sessionToken")){
 			//session token returned
 			return jsonObjResponse.getString("sessionToken");
@@ -398,20 +398,20 @@ public class AssumeRoleWithOktaSAML {
 			}
 		}
 		else{
-			//Unsuccessful verification 
+			//Unsuccessful verification
 			return "";
 		}
 	}
 
-	
+
 	/*Handles factor selection based on factors found in parameter authResponse, returns the selected factor
 	 * Precondition: JSINObject authResponse
-	 * Postcondition: return session token as String sessionToken 
+	 * Postcondition: return session token as String sessionToken
 	 */
 	public static JSONObject selectFactor(JSONObject authResponse) throws JSONException{
 		JSONArray factors = authResponse.getJSONObject("_embedded").getJSONArray("factors");
 		JSONObject factor;
-		String factorType; 
+		String factorType;
 		System.out.println("\nMulti-Factor authentication required. Please select a factor to use.");
 		//list factor to select from to user
 		System.out.println("Factors:");
@@ -430,26 +430,26 @@ public class AssumeRoleWithOktaSAML {
 					factorType = "Okta Verify";
 				}
 			}
-			System.out.println("[ " + (i+1) + " ] :" + factorType );			
+			System.out.println("[ " + (i+1) + " ] :" + factorType );
 		}
-		
+
 		//Handles user factor selection
 		int selection = numSelection(factors.length());
 		return factors.getJSONObject(selection);
 	}
-	
 
-	/*Handles MFA for users, returns an Okta session token if user is authenticated 
+
+	/*Handles MFA for users, returns an Okta session token if user is authenticated
 	 * Precondition: question factor as JSONObject factor, current state token stateToken
-	 * Postcondition: return session token as String sessionToken 
+	 * Postcondition: return session token as String sessionToken
 	 */
 	private static String mfa(JSONObject authResponse){
-		try {	 
+		try {
 			//User selects which factor to use
-			JSONObject factor = selectFactor(authResponse); 
+			JSONObject factor = selectFactor(authResponse);
 			String factorType = factor.getString("factorType");
 			String stateToken = authResponse.getString("stateToken");
-			
+
 			//factor selection handler
 			switch(factorType){
 				case ("question"):{
@@ -458,8 +458,8 @@ public class AssumeRoleWithOktaSAML {
 					if(sessionToken.equals("change factor")){
 						System.out.println("Factor Change Initiated");
 						return mfa(authResponse);
-					} 
-					return sessionToken;	
+					}
+					return sessionToken;
 				}
 				case ("sms"):{
 					//sms factor handler
@@ -469,15 +469,15 @@ public class AssumeRoleWithOktaSAML {
 						return mfa(authResponse);
 					}
 					return sessionToken;
-					
+
 				}
 				case ("token:software:totp"):{
-					//token factor handler 
+					//token factor handler
 					String sessionToken = totpFactor(factor,stateToken);
 					if(sessionToken.equals("change factor")){
 						System.out.println("Factor Change Initiated");
 						return mfa(authResponse);
-					} 
+					}
 					return sessionToken;
 				}
 				case ("push"):{
@@ -498,16 +498,16 @@ public class AssumeRoleWithOktaSAML {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return "";		
+		return "";
 	}
-	
-	
+
+
 	/* prints final status message to user */
 	private static void resultMessage(){
 		Calendar date = Calendar.getInstance();
 		SimpleDateFormat dateFormat = new SimpleDateFormat();
 		date.add(Calendar.HOUR,1);
-		
+
 		//change with file customization
 		System.out.println("\n----------------------------------------------------------------------------------------------------------------------");
 		System.out.println("Your new access key pair has been stored in the aws configuration file "
@@ -518,39 +518,43 @@ public class AssumeRoleWithOktaSAML {
 				+ "(e.g. aws ec2 describe-instances)");
 		System.out.println("----------------------------------------------------------------------------------------------------------------------");
 	}
-	
-	
+
+
 	/* Authenticates users credentials via Okta, return Okta session token
 	 * Postcondition: returns String oktaSessionToken
 	 * */
 	private static String oktaAuthntication() throws ClientProtocolException, JSONException, IOException{
 		CloseableHttpResponse responseAuthenticate = null;
-		int requestStatus = 0; 
-		
+		int requestStatus = 0;
+
 		//Redo sequence if response from AWS doesn't return 200 Status
 		while(requestStatus != 200){
-			
-	 		// Prompt for user credentials
-	 		System.out.print("Username: ");
-	 		Scanner scanner = new Scanner(System.in);
-	 		
-			String oktaUsername = scanner.next();
-	 		
+			String oktaUsername = System.getenv("OKTA_USERNAME");
+
+            if (oktaUsername == null || oktaUsername.length == 0) {
+                // Prompt for user credentials
+                System.out.print("Username: ");
+                Scanner scanner = new Scanner(System.in);
+                oktaUsername = scanner.next();
+            } else {
+                System.out.print("Username: " + oktaUsername + " (from OKTA_USERNAME env variable)");
+            }
+
 	 		Console console = System.console();
 	 		String oktaPassword = new String(console.readPassword("Password: "));
-	 		
+
 	 		responseAuthenticate = authnticateCredentials(oktaUsername, oktaPassword);
 			requestStatus = responseAuthenticate.getStatusLine().getStatusCode();
 			authnFailHandler(requestStatus, responseAuthenticate);
 		}
-	
+
 		//Retrieve and parse the Okta response for session token
 		BufferedReader br = new BufferedReader(new InputStreamReader(
 		(responseAuthenticate.getEntity().getContent())));
-		
+
 		String outputAuthenticate = br.readLine();
 		JSONObject jsonObjResponse = new JSONObject(outputAuthenticate);
-		
+
 		responseAuthenticate.close();
 
 		if(jsonObjResponse.getString("status").equals("MFA_REQUIRED")){
@@ -560,7 +564,7 @@ public class AssumeRoleWithOktaSAML {
 		}
 	}
 
-	
+
 	/* Retrieves SAML assertion containing roles from AWS */
 	private static String awsSamlHandler(String oktaSessionToken) throws ClientProtocolException, IOException{
 		HttpGet httpget = null;
@@ -568,16 +572,16 @@ public class AssumeRoleWithOktaSAML {
 		CloseableHttpClient httpClient = buildHttpClient();
 		String resultSAML = "";
 		String outputSAML = "";
-		
+
 		// Part 2: Get the Identity Provider and Role ARNs.
-		// Request for AWS SAML response containing roles 
+		// Request for AWS SAML response containing roles
 		httpget = new HttpGet(oktaAWSAppURL + "?onetimetoken=" + oktaSessionToken);
 		responseSAML = httpClient.execute(httpget);
 		samlFailHandler(responseSAML.getStatusLine().getStatusCode(), responseSAML);
-		
+
 		//Parse SAML response
 		BufferedReader brSAML = new BufferedReader(new InputStreamReader(
-		(responseSAML.getEntity().getContent()))); 
+		(responseSAML.getEntity().getContent())));
 		//responseSAML.close();
 
 		while ((outputSAML = brSAML.readLine()) != null) {
@@ -588,17 +592,17 @@ public class AssumeRoleWithOktaSAML {
 		httpClient.close();
 		return resultSAML;
 	}
-	
-	
+
+
 	/* Assumes SAML role selected by the user based on authorized Okta AWS roles given in SAML assertion result SAML
-	 * Precondition: String resultSAML 
-	 * Postcondition: returns type AssumeRoleWithSAMLResult  
+	 * Precondition: String resultSAML
+	 * Postcondition: returns type AssumeRoleWithSAMLResult
 	 */
 	private static AssumeRoleWithSAMLResult assumeAWSRole(String resultSAML){
 		// Decode SAML response
 		resultSAML = resultSAML.replace("&#x2b;", "+").replace("&#x3d;", "=");
 		String resultSAMLDecoded = new String(Base64.decodeBase64(resultSAML));
-		
+
 		ArrayList<String> principalArns = new ArrayList<String>();
 		ArrayList<String> roleArns = new ArrayList<String>();
 
@@ -607,12 +611,10 @@ public class AssumeRoleWithOktaSAML {
 			System.out.println("\nYou do not have access to AWS through Okta. \nPlease contact your administrator.");
 			System.exit(0);
 		}
-		
-		System.out.println("\nPlease choose the role you would like to assume: ");
-		
+
 		//Gather list of applicable AWS roles
 		int i = 0;
-		while (resultSAMLDecoded.indexOf("arn:aws") != -1) { 
+		while (resultSAMLDecoded.indexOf("arn:aws") != -1) {
 			String resultSAMLRole = resultSAMLDecoded.substring(resultSAMLDecoded.indexOf("arn:aws"), resultSAMLDecoded.indexOf("</saml2:AttributeValue"));
 			String[] parts = resultSAMLRole.split(",");
 			principalArns.add(parts[0]);
@@ -622,23 +624,30 @@ public class AssumeRoleWithOktaSAML {
 			i++;
 		}
 
-		//Prompt user for role selection
-		int selection = numSelection(roleArns.size());
-		
+        int selection;
+        if (i == 1) {
+            // There is only one choice, so auto-select it
+            selection = 0;
+        }
+            // Prompt user for role selection
+            System.out.println("\nPlease choose the role you would like to assume: ");
+            selection = numSelection(roleArns.size());
+        }
+
 		String principalArn  = principalArns.get(selection);
 		String roleArn = roleArns.get(selection);
-		
+
 		//use user credentials to assume AWS role
 		AWSSecurityTokenServiceClient stsClient = buildStsClient();
-		AssumeRoleWithSAMLRequest assumeRequest = new AssumeRoleWithSAMLRequest() 
-		.withPrincipalArn(principalArn) 
-		.withRoleArn(roleArn) 
-		.withSAMLAssertion(resultSAML); 
-		
+		AssumeRoleWithSAMLRequest assumeRequest = new AssumeRoleWithSAMLRequest()
+		.withPrincipalArn(principalArn)
+		.withRoleArn(roleArn)
+		.withSAMLAssertion(resultSAML);
+
 		return  stsClient.assumeRoleWithSAML(assumeRequest);
 	}
-	
-	
+
+
 	/* Retrieves AWS credentials from AWS's assumedRoleResult and write the to aws credential file
 	 * Precondition :  AssumeRoleWithSAMLResult assumeResult
 	 */
@@ -648,28 +657,28 @@ public class AssumeRoleWithOktaSAML {
 					assumeResult.getCredentials().getAccessKeyId(),
 				assumeResult.getCredentials().getSecretAccessKey(),
 				assumeResult.getCredentials().getSessionToken());
-	
+
 		String awsAccessKey = temporaryCredentials.getAWSAccessKeyId();
 		String awsSecretKey = temporaryCredentials.getAWSSecretKey();
 		String awsSessionToken = temporaryCredentials.getSessionToken();
-		
+
 		String profileName = "";
 		PrintWriter writer = null;
-		
+
 		if (oktaAppLabel != null && oktaAppLabel.length() > 0) {
 			profileName = oktaAppLabel;
 			//Append AWS credentials to file
 			FileWriter file = new FileWriter(System.getProperty("user.home")+"/.aws/credentials", true);
-			
+
 			writer = new PrintWriter(new BufferedWriter(file));
 		} else {
 			profileName = "default";
 			File file = new File (System.getProperty("user.home")+"/.aws/credentials");
 			file.getParentFile().mkdirs();
-			
+
 			writer = new PrintWriter(file, "UTF-8");
 		}
-			
+
 		writer.println("["+profileName+"]");
 		writer.println("aws_access_key_id="+awsAccessKey);
 		writer.println("aws_secret_access_key="+awsSecretKey);
@@ -677,16 +686,16 @@ public class AssumeRoleWithOktaSAML {
 		writer.close();
 	}
 
-	
+
 	public static void main(String[] args) throws Exception {
 		getProxySettings();
 		awsSetup();
 		extractCredentials();
-		
+
 		// Part 1: Initiate the authentication and capture the SAML assertion.
 		CloseableHttpClient httpClient = null;
 		String resultSAML = "";
-		try {		
+		try {
 			String oktaSessionToken = oktaAuthntication();
 			//Part 2 get saml assertion
 			resultSAML = awsSamlHandler(oktaSessionToken);
@@ -703,13 +712,13 @@ public class AssumeRoleWithOktaSAML {
 		catch (IOException e) {
 			e.printStackTrace();
 		}
- 
+
 		// Part 3: Assume an AWS role using the SAML Assertion from Okta
 		AssumeRoleWithSAMLResult assumeResult = assumeAWSRole(resultSAML);
 
 		// Part 4: Write the credentials to ~/.aws/credentials
-		setAWSCredentials(assumeResult);		
-		
+		setAWSCredentials(assumeResult);
+
 		// Print Final message
 		resultMessage();
 	}
